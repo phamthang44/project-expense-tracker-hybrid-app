@@ -1,52 +1,88 @@
 /**
- * Mock project data.
- * This file is designed to be easily swapped for Firebase Firestore calls.
- *
- * Future integration:
- *   import { collection, getDocs } from 'firebase/firestore';
- *   const snapshot = await getDocs(collection(db, 'projects'));
- *   const projects: Project[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+ * Shared types and helpers for the Project Expense Tracker.
+ * Interfaces mirror the real Firestore collections.
  */
 
+// ── Expense (Firestore "expenses" collection) ────────────────────────────────
 export interface Expense {
+  /** Firestore document ID, e.g. "10_10" */
   id: string;
-  label: string;
+  expenseId: number;
+  projectId: number;
   amount: number;
   currency: string;
-  date: string; // ISO 8601 date string, e.g. "2025-10-24"
+  /** DD/MM/YYYY from admin app */
+  date: string;
+  /** Expense category, e.g. "Food & Entertainment" */
+  type: string;
+  claimant: string;
+  description: string | null;
+  location: string | null;
+  paymentMethod: string;
+  paymentStatus: string;
 }
 
+// ── Project (Firestore "projects" collection) ────────────────────────────────
 export interface Project {
+  /** Firestore document ID, e.g. "DSDA", "PRJ-002" */
   id: string;
-  name: string;
-  category: string;
-  status: "Active" | "Pending" | "Completed" | "Archived";
-  /** MaterialIcons icon name */
-  iconName: string;
-  /** Background color of the icon tile */
-  iconBgColor: string;
-  /** Icon foreground color */
-  iconColor: string;
-  /** ISO 8601 date string for the project (from Firebase), e.g. "2023-10-24" */
-  date: string;
-  isFavorite: boolean;
-  isPriority: boolean;
-  /** Optional remote image URL (used in Favorites list) */
-  imageUrl?: string;
-  /** Total expense amount (sum of all expense items) */
-  totalExpenses: number;
-  /** Currency code, e.g. "USD" */
-  currency: string;
-  /** List of individual expenses */
+  /** Numeric id field from admin app */
+  projectId: number;
+  projectName: string;
+  projectCode: string;
+  description: string;
+  status: string;
+  /** "High" | "Medium" | "Low" */
+  priority: string;
+  budget: number;
+  manager: string;
+  clientInfo: string | null;
+  specialRequirements: string | null;
+  /** DD/MM/YYYY */
+  startDate: string;
+  /** DD/MM/YYYY */
+  endDate: string;
+  /** Expenses fetched from "expenses" collection, matched by projectId */
   expenses: Expense[];
+  /** Computed sum of expense amounts */
+  totalExpenses: number;
+  /** Default currency from expenses, or "USD" */
+  currency: string;
+}
+
+// ── Date helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Parse a "DD/MM/YYYY" string into a Date object.
+ * Returns null for empty / malformed strings.
+ */
+export function parseDDMMYYYY(str: string): Date | null {
+  if (!str) return null;
+  const parts = str.split("/");
+  if (parts.length !== 3) return null;
+  const [dd, mm, yyyy] = parts;
+  const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  return isNaN(d.getTime()) ? null : d;
 }
 
 /**
- * Helper: format an ISO date string into a readable label.
- * e.g. "2023-10-24" → "Oct 24, 2023"
+ * Convert "DD/MM/YYYY" → "YYYY-MM-DD" (ISO) for date comparison.
  */
-export function formatDate(iso: string): string {
-  const d = new Date(iso + "T00:00:00");
+export function ddmmyyyyToISO(str: string): string {
+  if (!str) return "";
+  const parts = str.split("/");
+  if (parts.length !== 3) return str;
+  const [dd, mm, yyyy] = parts;
+  return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+}
+
+/**
+ * Format a "DD/MM/YYYY" string into a readable label.
+ * e.g. "24/10/2023" → "Oct 24, 2023"
+ */
+export function formatDate(ddmmyyyy: string): string {
+  const d = parseDDMMYYYY(ddmmyyyy);
+  if (!d) return ddmmyyyy || "—";
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
@@ -54,156 +90,52 @@ export function formatDate(iso: string): string {
   });
 }
 
-export const MOCK_PROJECTS: Project[] = [
-  {
-    id: "1",
-    name: "Modern Eco-Villa",
-    category: "Architecture",
-    status: "Active",
-    iconName: "folder",
-    iconBgColor: "#dbeafe",
-    iconColor: "#1973f0",
-    date: "2025-09-10",
-    isFavorite: true,
-    isPriority: true,
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAkBpxhiwOg-2vnEIHpbQxW0SH0yPC9LWImak2X0TQP8kdEclJEvtKDTebcaXrHtl9H5KRCWK3fWpvZ0zpCUSFhnRZ449n-2nCuvtCPW-s8_XqBxrgMtfRzucUWEsiFy_AgIs8EleLLvueBtoLFV-HeMszkj2BnQxWoG2Q1xY-VvHD0cNXLRUNgZQ4sxHxXHvswAJ-z_jzeMCQC88rHDg10tRww69apc_6VvcsbKiAiW6CCzxd1IzlBQ1TBGFCuuCtw0_qU0-GjvQ",
-    totalExpenses: 4200,
-    currency: "USD",
-    expenses: [
-      {
-        id: "e1-1",
-        label: "Materials",
-        amount: 2500,
-        currency: "USD",
-        date: "2025-09-10",
-      },
-      {
-        id: "e1-2",
-        label: "Labour",
-        amount: 1700,
-        currency: "USD",
-        date: "2025-10-01",
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Urban Loft Renovation",
-    category: "Interior",
-    status: "Pending",
-    iconName: "storage",
-    iconBgColor: "#ede9fe",
-    iconColor: "#7c3aed",
-    date: "2025-08-15",
-    isFavorite: true,
-    isPriority: false,
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCX1TOtQQHfC4lWsWHJ7sAR5_asp5D7E9NWD-PZGCvtgT_7CxwraikmHTG9OjmsEU5lO-65sDEzu0iNEr8QRel-Vsg5pB_2eJvrf60qUuR0V5CR0919y2kYSv2gYYvP72wNFuZHD_IDMavlSy1y4gZcWJie2TTK6oW9iTkm8sMuMU3GhtmciiV2rZjMgNMH9inNCXdKvPNzn4VFj29KxcDt0po79GauiObU4l5gsOOv6VX72o1PFx5bXqNoq5unwL49NyzLymyidA",
-    totalExpenses: 800,
-    currency: "USD",
-    expenses: [
-      {
-        id: "e2-1",
-        label: "Software Licences",
-        amount: 800,
-        currency: "USD",
-        date: "2025-08-15",
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "Riverside Public Park",
-    category: "Landscape",
-    status: "Active",
-    iconName: "bar-chart",
-    iconBgColor: "#d1fae5",
-    iconColor: "#059669",
-    date: "2025-09-20",
-    isFavorite: true,
-    isPriority: false,
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDXeZFdx5OMfqgd3Q6XOw84xlBGvvY44CaJKJFzldofYPbx1Z-iaORkq_e1sKGwP_oADgZv_JQqgdQqNQiEO-owp7649bKOceI_id-bwi1k90CI-Kk36SKd0ftyMWfp2sbkYABBXJwM9wF6o5AYWQ8zIDPWMjQOFMslko3SlIArUwa9jRvbKfydarMvCpKnHIiCx41pIfZUBtLJ_AoJAvnm3phWw7YwdJZYLb-xDSD-ZRLqvD5vIv32aa_ocZ4PSxRoZ0uD2az5yg",
-    totalExpenses: 3100,
-    currency: "USD",
-    expenses: [
-      {
-        id: "e3-1",
-        label: "Consultancy",
-        amount: 1500,
-        currency: "USD",
-        date: "2025-09-20",
-      },
-      {
-        id: "e3-2",
-        label: "Equipment",
-        amount: 1600,
-        currency: "USD",
-        date: "2025-10-05",
-      },
-    ],
-  },
-  {
-    id: "4",
-    name: "Tech HQ Workspace",
-    category: "Commercial",
-    status: "Completed",
-    iconName: "image",
-    iconBgColor: "#dbeafe",
-    iconColor: "#2563eb",
-    date: "2023-10-24",
-    isFavorite: true,
-    isPriority: false,
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAkQ9sbNs1HKBCXXj4dmZAlkjXb6yow3J5BIzL1NbmlyDQyukvFomeScFMEOFMSIjQlo1UPBINIxx97liaEq2bKN_r5dGviOEQ-4znosXK881gktMSRa1-D_HWiePLo4apIKjm98H4iVuoxt7jPal5W-L1q7WpR_Wo7Fq5wO9sZvvUxlXGsSRnWrqGmOjaZk788NqzITaDl_WaEOOsGegQsSuT_I7WFmg7lLTkJZHQq1wsevb_ZN9TY5t5jZBpEBOc2spEYr7ecIw",
-    totalExpenses: 9800,
-    currency: "USD",
-    expenses: [
-      {
-        id: "e4-1",
-        label: "Photography",
-        amount: 4000,
-        currency: "USD",
-        date: "2023-09-12",
-      },
-      {
-        id: "e4-2",
-        label: "Editing",
-        amount: 2800,
-        currency: "USD",
-        date: "2023-10-01",
-      },
-      {
-        id: "e4-3",
-        label: "Hosting",
-        amount: 3000,
-        currency: "USD",
-        date: "2023-10-20",
-      },
-    ],
-  },
-  {
-    id: "5",
-    name: "Project Alpha Phase 1",
-    category: "Engineering",
-    status: "Archived",
-    iconName: "code",
-    iconBgColor: "#ffedd5",
-    iconColor: "#ea580c",
-    date: "2023-10-18",
-    isFavorite: false,
-    isPriority: false,
-    totalExpenses: 1200,
-    currency: "USD",
-    expenses: [
-      {
-        id: "e5-1",
-        label: "Developer hours",
-        amount: 1200,
-        currency: "USD",
-        date: "2023-10-18",
-      },
-    ],
-  },
-];
+// ── Visual helpers (derive icon/colour from status) ──────────────────────────
+
+export interface StatusVisuals {
+  iconName: string;
+  iconBgColor: string;
+  iconColor: string;
+}
+
+/** Map a project status string to MaterialIcons icon + colours. */
+export function getStatusVisuals(status: string): StatusVisuals {
+  switch (status?.toLowerCase()) {
+    case "active":
+      return {
+        iconName: "folder",
+        iconBgColor: "#dbeafe",
+        iconColor: "#2563eb",
+      };
+    case "pending":
+      return {
+        iconName: "hourglass-empty",
+        iconBgColor: "#fef3c7",
+        iconColor: "#d97706",
+      };
+    case "completed":
+      return {
+        iconName: "check-circle",
+        iconBgColor: "#d1fae5",
+        iconColor: "#059669",
+      };
+    case "cancelled":
+      return {
+        iconName: "cancel",
+        iconBgColor: "#fee2e2",
+        iconColor: "#dc2626",
+      };
+    case "archived":
+      return {
+        iconName: "archive",
+        iconBgColor: "#e5e7eb",
+        iconColor: "#6b7280",
+      };
+    default:
+      return {
+        iconName: "folder",
+        iconBgColor: "#dbeafe",
+        iconColor: "#2563eb",
+      };
+  }
+}
