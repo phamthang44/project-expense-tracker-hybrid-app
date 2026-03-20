@@ -1,4 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -24,8 +25,19 @@ export default function ProjectCard({
 }: ProjectCardProps) {
   const vis = getStatusVisuals(project.status);
 
+  function handlePress() {
+    router.push({
+      pathname: "/project-detail",
+      params: { projectId: String(project.projectId) },
+    });
+  }
+
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface }]}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: colors.surface }]}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
       <View style={[styles.iconTile, { backgroundColor: vis.iconBgColor }]}>
         <MaterialIcons
           name={vis.iconName as any}
@@ -45,10 +57,21 @@ export default function ProjectCard({
           {project.projectCode} • {project.status} •{" "}
           {formatDate(project.startDate)}
         </Text>
+        {project.expenses.length > 0 && (
+          <Text style={[styles.expenseCount, { color: colors.subtext }]}>
+            {project.expenses.length} expense
+            {project.expenses.length !== 1 ? "s" : ""} •{" "}
+            {project.currency} {project.totalExpenses.toLocaleString()}
+          </Text>
+        )}
       </View>
 
+      {/* Favorite toggle */}
       <TouchableOpacity
-        onPress={() => onToggleFavorite(project.id)}
+        onPress={(e) => {
+          e.stopPropagation();
+          onToggleFavorite(project.id);
+        }}
         style={styles.starBtn}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
@@ -58,7 +81,14 @@ export default function ProjectCard({
           color={isFavorite ? "#f59e0b" : colors.icon}
         />
       </TouchableOpacity>
-    </View>
+
+      <MaterialIcons
+        name="chevron-right"
+        size={22}
+        color={colors.icon}
+        style={{ marginLeft: 2 }}
+      />
+    </TouchableOpacity>
   );
 }
 
@@ -86,5 +116,6 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1 },
   cardTitle: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
   cardMeta: { fontSize: 13 },
-  starBtn: { padding: 4, marginLeft: 8 },
+  expenseCount: { fontSize: 12, marginTop: 3 },
+  starBtn: { padding: 4, marginLeft: 6 },
 });

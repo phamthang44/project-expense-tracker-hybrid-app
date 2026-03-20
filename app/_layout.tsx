@@ -21,6 +21,14 @@ function InnerLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
+          name="project-detail"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="add-expense"
+          options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
