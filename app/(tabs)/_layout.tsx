@@ -1,36 +1,16 @@
-import { MaterialIcons } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { View } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors, PRIMARY } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
+type TabIconName = React.ComponentProps<typeof MaterialIcons>["name"];
+
 /** Active tab icon wrapped in a tinted pill */
-function TabIcon({
-  name,
-  color,
-  focused,
-}: {
-  name: any;
-  color: string;
-  focused: boolean;
-}) {
-  return (
-    <View
-      style={{
-        backgroundColor: focused ? `${PRIMARY}15` : "transparent",
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 4,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <MaterialIcons name={name} size={24} color={color} />
-    </View>
-  );
+function TabIcon({ name, color }: { name: TabIconName; color: string }) {
+  return <MaterialIcons name={name} size={24} color={color} />;
 }
 
 export default function TabLayout() {
@@ -61,11 +41,7 @@ export default function TabLayout() {
         options={{
           title: "Projects",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              name={focused ? "folder" : "folder-open"}
-              color={color}
-              focused={focused}
-            />
+            <TabIcon name={focused ? "folder" : "folder-open"} color={color} />
           ),
         }}
       />
@@ -77,7 +53,6 @@ export default function TabLayout() {
             <TabIcon
               name={focused ? "favorite" : "favorite-border"}
               color={color}
-              focused={focused}
             />
           ),
         }}
@@ -87,7 +62,7 @@ export default function TabLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="settings" color={color} focused={focused} />
+            <TabIcon name="settings" color={color} />
           ),
         }}
       />
